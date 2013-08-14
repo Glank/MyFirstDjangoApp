@@ -1,21 +1,27 @@
+from django.utils import timezone
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
 from django.core.urlresolvers import reverse
+from django.views import generic
 
 from polls.models import *
 
-def index(request):
-    latest_poll_list = Poll.objects.order_by('-pub_date')[:5]
-    context = {'latest_poll_list': latest_poll_list}
-    return render(request, 'polls/index.html', context)
+class IndexView(generic.ListView):
+    template_name = 'polls/index.html'
+    context_object_name = 'latest_poll_list'
+    
+    def get_queryset(self):
+        return Poll.objects.filter(
+            pub_date__lte=timezone.now()
+        ).order_by('-pub_date')[:5]
 
-def detail(request, poll_id):
-    poll = get_object_or_404(Poll, pk=poll_id)
-    return render(request, 'polls/detail.html', {'poll':poll})
+class DetailView(generic.DetailView):
+    template_name = 'polls/detail.html'
+    model = Poll
 
-def results(request, poll_id):
-    poll = get_object_or_404(Poll, pk=poll_id)
-    return render(request, 'polls/results.html', {'poll':poll})
+class ResultsView(generic.DetailView):
+    template_name = 'polls/results.html'
+    model = Poll
 
 def vote(request, poll_id):
     p = get_object_or_404(Poll, pk=poll_id)
